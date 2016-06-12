@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="generator" content="pandoc">
+	<title>Workflows on HPC systems</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap.css" />
+    <link rel="stylesheet" type="text/css" href="css/bootstrap/bootstrap-theme.css" />
+    <link rel="stylesheet" type="text/css" href="css/swc.css" />
+    <meta charset="UTF-8" />
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body class="lesson">
+    <div class="container card">
+      <div class="banner">
+        <a href="http://it.wvu.edu/research/research-computing" title="Research 
+        Computing">
+      	<img alt="Research Computing banner" src="img/ResearchComputing.png" />
+        </a>
+      </div>
+      <article>
+      <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+                    <a href="index.html"><h1 class="title">Workflows on HPC systems</h1></a>
+          <h2 class="subtitle">High-throughput</h2>
+          <section class="objectives panel panel-warning">
+<div class="panel-heading">
+<h2 id="learning-objectives"><span class="glyphicon glyphicon-certificate"></span>Learning Objectives</h2>
+</div>
+<div class="panel-body">
+<ul>
+<li>Learn to break a job up into parts to reduce execution time</li>
+<li>Learn to use the debug queue to ensure the job is running</li>
+<li>Learn job dependencies to ensure correct job ordering</li>
+</ul>
+</div>
+</section>
+<p>Create submission shell script submit-stats-workflow.sh</p>
+<pre><code># Calculate reduced stats for A and Site B data files at J = 100 c/bp
+for datafile in [AB].txt
+do
+    qsub -v datafile=$datafile run-stats.sh
+done</code></pre>
+<p>Create job script run-stats.sh</p>
+<pre><code>cd $HOME/script-data
+echo $datafile
+bash goostats -J 100 -r $datafile stats-$datafile</code></pre>
+<p>Make sure run-stats.sh works correctly</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">debug</span></code></pre></div>
+<pre class="output"><code>qsub: waiting for job 103248.mountaineer to start
+qsub: job 103248.mountaineer ready
+
+[mcarlise@compute-01-25 ~]$</code></pre>
+<p>Set up environment and run an instance of the script</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">export</span> <span class="ot">datafile=</span>NENE01729A.txt
+$ <span class="kw">cd</span> <span class="ot">$HOME</span>/script-data
+$ <span class="kw">bash</span> run-stats.sh</code></pre></div>
+<pre class="output"><code>NENE01729A.txt</code></pre>
+<p>Check the output</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">pwd</span>
+$ <span class="kw">ls</span></code></pre></div>
+<pre class="output"><code>/users/mcarlise/script-data
+
+do-stats.sh  goostats        NENE01729B.txt  NENE01751A.txt  NENE01843B.txt  stats-NENE01729A.txt
+goodiff      NENE01729A.txt  NENE01736A.txt  NENE01751B.txt  run-stats.sh    submit-stats-workflow.sh</code></pre>
+<p>You can see that stats-NENE01729A.txt exists. And you can verify the output using the <code>less</code> or <code>cat</code> command.</p>
+<p>Submit the entire workflow</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">bash</span> submit-stats-workflow.sh</code></pre></div>
+<pre class="output"><code>103250.mountaineer
+103251.mountaineer
+103252.mountaineer
+103253.mountaineer
+103254.mountaineer
+103255.mountaineer
+103256.mountaineer</code></pre>
+<p>Verify all the running jobs</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">showq</span> -u training01</code></pre></div>
+<pre class="output"><code>active jobs------------------------
+JOBID              USERNAME      STATE PROCS   REMAINING            STARTTIME
+
+103250             mcarlise    Running     1     1:59:47  Sat Jun 11 16:33:12
+103251             mcarlise    Running     1     1:59:47  Sat Jun 11 16:33:12
+103253             mcarlise    Running     1     1:59:47  Sat Jun 11 16:33:12
+103252             mcarlise    Running     1     1:59:47  Sat Jun 11 16:33:12
+103256             mcarlise    Running     1     1:59:47  Sat Jun 11 16:33:12
+103254             mcarlise    Running     1     1:59:47  Sat Jun 11 16:33:12
+103255             mcarlise    Running     1     1:59:47  Sat Jun 11 16:33:12
+
+7 active jobs             7 of 384 processors in use by local jobs (1.82%)
+                          22 of 32 nodes active      (68.75%)
+
+eligible jobs----------------------
+JOBID              USERNAME      STATE PROCS     WCLIMIT            QUEUETIME
+
+
+0 eligible jobs   
+
+blocked jobs-----------------------
+JOBID              USERNAME      STATE PROCS     WCLIMIT            QUEUETIME
+
+
+0 blocked jobs   
+
+Total jobs:  7</code></pre>
+<p>You can use <code>ls</code> to verify that all the stats files appeared. You can use the <code>ls -l</code> command to check if any errors occurred.</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="kw">ls</span> -l run-stats.sh.e??????</code></pre></div>
+<pre class="output"><code>-rw------- 1 mcarlise wvu-hpc 0 Jun 11 16:33 run-stats.sh.e103250
+-rw------- 1 mcarlise wvu-hpc 0 Jun 11 16:33 run-stats.sh.e103251
+-rw------- 1 mcarlise wvu-hpc 0 Jun 11 16:33 run-stats.sh.e103252
+-rw------- 1 mcarlise wvu-hpc 0 Jun 11 16:33 run-stats.sh.e103253
+-rw------- 1 mcarlise wvu-hpc 0 Jun 11 16:33 run-stats.sh.e103254
+-rw------- 1 mcarlise wvu-hpc 0 Jun 11 16:33 run-stats.sh.e103255
+-rw------- 1 mcarlise wvu-hpc 0 Jun 11 16:33 run-stats.sh.e103256</code></pre>
+<p>You can see all the error output files have a size of 0.</p>
+        </div>
+      </div>
+      </article>
+      <div class="footer">
+      		We were aided in this work by the training and other support offered by 
+      		the <a href="http://software-carpentry.org">Software Carpentry</a> 
+      		project.
+      </div>
+    </div>
+    <!-- Javascript placed at the end of the document so the pages load faster -->
+    <script src="http://software-carpentry.org/v5/js/jquery-1.9.1.min.js"></script>
+    <script src="css/bootstrap/bootstrap-js/bootstrap.js"></script>
+    <script 
+    src='https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'></script>
+  </body>
+</html>
