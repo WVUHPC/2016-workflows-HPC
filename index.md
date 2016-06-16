@@ -7,6 +7,10 @@ title: Using workflows on HPC systems
 >
 > Some text on what we assume by the user
 
+> ## Getting Ready {.getready}
+>
+> [submit data](hpc-workflows.tar.gz)
+
 ## Topics
-1. [Introduction](00-intro.html)
-2. [High-throughput computing](01-throughput.html)
+1. [High-throughput computing](01-throughput.html)
+2. [Parallel computing](02-parallel.html)
